@@ -8,7 +8,7 @@ the strip bound on ζ and the Gamma bounds.
 
 ## Status
 
-Skeleton: the statement and all lemmas are stated in `RHLindelof/Main.lean`; proofs are `sorry`.
+All lemmas are stated in `RHLindelof/Main.lean`. The main theorem is proved from steps 1–7, which are still `sorry`.
 
 | Step | Lemma | Uses RH | Status |
 |---|---|---|---|
@@ -19,7 +19,7 @@ Skeleton: the statement and all lemmas are stated in `RHLindelof/Main.lean`; pro
 | 5 | `norm_riemannZeta_le_rpow_right` | yes | sorry |
 | 6 | `norm_gamma_mul_cos_le`, `norm_riemannZeta_le_rpow_left` | no | sorry |
 | 7 | `norm_le_of_phragmenLindelof_convexity`, `norm_riemannZeta_le_poly_strip` | no | sorry |
-| 8 | `lindelof_of_riemannHypothesis` | yes | sorry |
+| 8 | `lindelof_of_riemannHypothesis` (from steps 1–7) | yes | proved |
 
 ## Build
 
