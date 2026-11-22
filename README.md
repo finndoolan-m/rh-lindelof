@@ -1,28 +1,48 @@
 # rh-lindelof
 
-Lean 4 formalisation of **the Riemann hypothesis implies the Lindelöf hypothesis**
-(Littlewood; Titchmarsh §14.2), stated against Mathlib's `RiemannHypothesis`.
+A Lean 4 proof that **the Riemann hypothesis implies the Lindelöf hypothesis** (Littlewood, 1912;
+Titchmarsh, *The Theory of the Riemann Zeta-Function*, §14.2). It is sorry-free and stated
+against Mathlib's own `RiemannHypothesis`.
 
-Built on [PrimeNumberTheoremAnd](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd) for
-the strip bound on ζ and the Gamma bounds.
+```lean
+def LindelofHypothesis : Prop :=
+  ∀ ε : ℝ, 0 < ε → ∃ C : ℝ, ∀ t : ℝ, 1 ≤ |t| →
+    ‖riemannZeta (1 / 2 + t * I)‖ ≤ C * |t| ^ ε
 
-## Status
+theorem lindelof_of_riemannHypothesis (hRH : RiemannHypothesis) : LindelofHypothesis
+```
 
-Sorry-free. `#print axioms RHLindelof.lindelof_of_riemannHypothesis` shows only `propext`,
-`Classical.choice` and `Quot.sound`.
+`#print axioms RHLindelof.lindelof_of_riemannHypothesis` gives
+`[propext, Classical.choice, Quot.sound]`.
 
-| Step | Lemma | Uses RH | Status |
-|---|---|---|---|
-| 1 | `norm_riemannZeta_le_linear`, `norm_riemannZeta_bounds_of_two_le` | no | proved |
-| 2 | `exists_log_riemannZeta` | yes | proved |
-| 3 | `norm_log_riemannZeta_le` (Borel–Carathéodory) | yes | proved |
-| 4 | `norm_le_of_three_circles` | no | proved |
-| 5 | `norm_riemannZeta_le_rpow_right` | yes | proved |
-| 6 | `norm_le_of_phragmenLindelof_convexity` | no | proved |
-| 7 | `norm_gamma_mul_cos_le`, `norm_riemannZeta_le_rpow_left`, `norm_riemannZeta_le_poly_strip` | no | proved |
-| 8 | `lindelof_of_riemannHypothesis` (from steps 1–7) | yes | proved |
+Several of the intermediate results are unconditional and reusable on their own:
+Hadamard's three-circle theorem, Phragmén–Lindelöf convexity in a vertical strip, the bound
+`Γ(s) cos(πs/2) ≪ |t|^(σ − 1/2)`, and explicit bounds for `ζ` on `σ ≥ 2`.
 
-### Notes on the proof
+## Files
+
+| File | Contents | Uses RH |
+|---|---|---|
+| `RHLindelof/ZetaBounds.lean` | `‖ζ(s) − 1‖ ≤ π²/6 − 1` on `σ ≥ 2`; `‖ζ(σ + it)‖ ≪ |t|` on `1/2 ≤ σ ≤ 6` | no |
+| `RHLindelof/LogZeta.lean` | holomorphic `log ζ` on the ball of radius `5/2` about `3 + it`; Borel–Carathéodory bound | yes |
+| `RHLindelof/ThreeCircles.lean` | Hadamard's three-circle theorem | no |
+| `RHLindelof/RightOfLine.lean` | `ζ(σ + it) = O(|t|^ε)` for `σ ≥ 1/2 + δ` | yes |
+| `RHLindelof/Convexity.lean` | Phragmén–Lindelöf convexity for functions of exponential growth | no |
+| `RHLindelof/FunctionalEquation.lean` | `Γ(s) cos(πs/2)` bound; moving bounds to `σ = 1/2 − η`; growth in the strip | no |
+| `RHLindelof/Main.lean` | the main theorem | yes |
+
+## Proof outline
+
+1. Under RH, `ζ` has no zeros in `σ > 1/2`. It therefore has a holomorphic logarithm on the
+   ball of radius `5/2` about `3 + it`.
+2. `ζ ≪ |t|` there, so `Re log ζ ≤ log |t| + O(1)`. Borel–Carathéodory turns this into
+   `|log ζ| ≪ log |t| / δ` on the ball of radius `5/2 − δ`.
+3. On the circle of radius `1/2`, `log ζ = O(1)`. Three circles then give
+   `log ζ(σ + it) = O((log t)^θ)` with `θ < 1`, so `ζ(σ + it) = O(|t|^ε)` for `σ > 1/2`.
+4. The functional equation turns this into `ζ(1/2 − η + it) = O(|t|^(η + ε))`. Convexity on
+   `[1/2 − η, 1/2 + η]` then gives `ζ(1/2 + it) = O(|t|^(η/2 + ε))`. Letting `η → 0` finishes.
+
+## Notes on the formalisation
 
 - **Step 1.** For `σ ≥ 2`, `‖ζ(s) − 1‖ ≤ π²/6 − 1` from the Dirichlet series. That gives both
   bounds on `σ ≥ 2` and the linear bound on `3 ≤ σ ≤ 6`. For `1/2 ≤ σ < 3` it uses
@@ -45,9 +65,31 @@ Sorry-free. `#print axioms RHLindelof.lindelof_of_riemannHypothesis` shows only 
   `Γ(s+1) = sΓ(s)`. Step 6 then interpolates between the two lines. `norm_gamma_mul_cos_le` is
   stated for `1/2 ≤ σ ≤ 3/2`.
 
-## Build
+## Building
+
+Requires [elan](https://github.com/leanprover/elan). The toolchain is Lean v4.35.0, and the
+dependency is [PrimeNumberTheoremAnd](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd)
+at commit `a4fb698`, which brings in Mathlib.
 
 ```
 lake exe cache get
 lake build
 ```
+
+To check the axioms, compile a file containing
+
+```lean
+import RHLindelof
+#print axioms RHLindelof.lindelof_of_riemannHypothesis
+```
+
+## Acknowledgements
+
+Built on [Mathlib](https://github.com/leanprover-community/mathlib4): `riemannZeta`, the
+functional equation, Borel–Carathéodory, the three-lines theorem and primitives on discs. Also
+built on [PrimeNumberTheoremAnd](https://github.com/AlexKontorovich/PrimeNumberTheoremAnd): the
+linear strip bound for `ζ` and Gamma bounds on the critical line.
+
+## License
+
+Apache 2.0, the same as Mathlib and PrimeNumberTheoremAnd.
